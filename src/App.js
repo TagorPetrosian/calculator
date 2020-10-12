@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import styled from 'styled-components';
+import { of, interval, concat, Subject } from 'rxjs';
+import { takeWhile, takeUntil, scan, startWith, repeatWhen, share, filter } from 'rxjs/operators';
 
 //todo: find divide sign char, add C for clear
 const buttonsData = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '=', '+', '/', '*', '-', 'C'];
@@ -37,37 +39,44 @@ const Button = styled.button`
   width: 2rem;
   height: 2rem;
 `;
+const countdown$ = interval(250)
+  .pipe(
+    startWith(5),
+    scan((time) => time - 1),
+    takeWhile((time) => time > 0)
+  )
+  .pipe(share());
+
+const actions$ = new Subject();
+const snooze$ = actions$.pipe(filter((action) => action === 'snooze'));
+const dismiss$ = actions$.pipe(filter((action) => action === 'dismiss'));
+
+const snoozeableAlarm$ = concat(countdown$, of('Wake up! 🎉')).pipe(repeatWhen(() => snooze$));
+const observable$ = concat(snoozeableAlarm$.pipe(takeUntil(dismiss$)), of('Have a nice day! 🤗'));
 
 function App() {
   const [expression, setExpression] = useState('');
 
-  //Todo: write evalute function since eval is dengerous
-  // const evaluate = (expression) => {
-  //   return expression.split('').reduce((acc, char) => {
-  //     if(!isNaN(Number(char)))
-  //   })
-  // };
+  useEffect(() => {
+    const sub = observable$.subscribe(setExpression);
+    return () => sub.unsubscribe();
+  }, []);
 
-  //Todo: check zero prefix
-  //6+0+6 - legal
-  //6+06 - illegal
-  //5076 +50 -legal
-  //0+6 - legal
-  //07+ 0 - illegal
-  //700005 +40006 - legal
   const isLegalInput = (value) => {
     const chars = expression.split('');
+
     const lastChar = chars[chars.length - 1];
+
     if (chars.length === 0 && isOperator(value)) return false;
+
     if (isOperator(lastChar) && isOperator(value)) return false;
 
-    // if(value === '0' && lastChar && !isOperator(lastChar)) return false//
     return true;
   };
 
   const isOperator = (value) => /[\+-\/X]/.test(value);
 
-  //Todo: add clear evalutaion
+  //Todo: add clear evaluation
   const onValueConcat = (value) => {
     if (isLegalInput(value)) {
       if (value === '=') setExpression(`${eval(expression)}`);
@@ -87,6 +96,9 @@ function App() {
     <Wrapper>
       <Screen>{expression}</Screen>
       <Keyboard>{renderButtons}</Keyboard>
+      <Button key='somekey' onClick={() => actions$.next('snooze')}>
+        snooze
+      </Button>
     </Wrapper>
   );
 }
