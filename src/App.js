@@ -1,9 +1,9 @@
-import React,  {useState} from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import styled from 'styled-components';
 
 //todo: find divide sign char, add C for clear
-const buttonsData = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '=', '+', '/', '*', '-', 'C']
+const buttonsData = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '=', '+', '/', '*', '-', 'C'];
 const Wrapper = styled.div`
   width: 20rem;
   height: 40rem;
@@ -16,9 +16,9 @@ const Wrapper = styled.div`
 
 //show clearer width calculation
 const Screen = styled.div`
-  display:flex;
+  display: flex;
   font-size: 0.8rem;
-  align-items:center;
+  align-items: center;
   border: 1px solid brown;
   border-radius: 3px;
   background-color: yellow;
@@ -40,7 +40,7 @@ const Button = styled.button`
 
 function App() {
   const [expression, setExpression] = useState('');
-  
+
   //Todo: write evalute function since eval is dengerous
   // const evaluate = (expression) => {
   //   return expression.split('').reduce((acc, char) => {
@@ -58,35 +58,35 @@ function App() {
   const isLegalInput = (value) => {
     const chars = expression.split('');
     const lastChar = chars[chars.length - 1];
-    if(chars.length === 0 && isOperator(value)) return false;
-    if(isOperator(lastChar) && isOperator(value)) return false;
+    if (chars.length === 0 && isOperator(value)) return false;
+    if (isOperator(lastChar) && isOperator(value)) return false;
 
     // if(value === '0' && lastChar && !isOperator(lastChar)) return false//
     return true;
   };
 
-  const isOperator = (value) => /[\+-\/X]/.test(value)
+  const isOperator = (value) => /[\+-\/X]/.test(value);
 
   //Todo: add clear evalutaion
   const onValueConcat = (value) => {
-    if(isLegalInput(value)) {
-
-      if(value === '=') setExpression( `${eval(expression)}` );
+    if (isLegalInput(value)) {
+      if (value === '=') setExpression(`${eval(expression)}`);
       else setExpression(`${expression}${value}`);
-
     } else {
       setExpression('Error');
     }
   };
 
-  const renderButtons = buttonsData.map((value, index) => <Button key={index} onClick={() => onValueConcat(value)}>{value}</Button>);
+  const renderButtons = buttonsData.map((value, index) => (
+    <Button key={index} onClick={() => onValueConcat(value)}>
+      {value}
+    </Button>
+  ));
 
   return (
     <Wrapper>
       <Screen>{expression}</Screen>
-      <Keyboard>
-        {renderButtons}
-      </Keyboard>
+      <Keyboard>{renderButtons}</Keyboard>
     </Wrapper>
   );
 }
